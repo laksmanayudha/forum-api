@@ -31,6 +31,11 @@ exports.up = (pgm) => {
       type: 'TEXT',
       notNull: true,
     },
+    is_deleted: {
+      type: 'BOOLEAN',
+      notNull: true,
+      default: false,
+    },
     created_at: {
       type: 'TIMESTAMP',
       default: new PgLiteral('CURRENT_TIMESTAMP'),

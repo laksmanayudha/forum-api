@@ -1,5 +1,6 @@
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const InvariantError = require('../../../Commons/exceptions/InvariantError');
+const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 const RegisterUser = require('../../../Domains/users/entities/RegisterUser');
 const RegisteredUser = require('../../../Domains/users/entities/RegisteredUser');
 const pool = require('../../database/postgres/pool');
@@ -124,21 +125,21 @@ describe('UserRepositoryPostgres', () => {
   });
 
   describe('verifyUserExist', () => {
-    it('should throw InvariantError when user not exist', async () => {
+    it('should throw NotFoundError when user not exist', async () => {
       // Arrange
       const userRepositoryPostgres = new UserRepositoryPostgres(pool, {});
 
       // Action & Assert
-      await expect(userRepositoryPostgres.verifyUserExist('unknowuserid-123')).rejects.toThrowError(InvariantError);
+      await expect(userRepositoryPostgres.verifyUserExist('unknowuserid-123')).rejects.toThrowError(NotFoundError);
     });
 
-    it('should not throw InvariantError when user exists', async () => {
+    it('should not throw NotFoundError when user exists', async () => {
       // Arrange
       await UsersTableTestHelper.addUser({ id: 'user-123' });
       const userRepositoryPostgres = new UserRepositoryPostgres(pool, {});
 
       // Action & Assert
-      await expect(userRepositoryPostgres.verifyUserExist('user-123')).resolves.not.toThrowError(InvariantError);
+      await expect(userRepositoryPostgres.verifyUserExist('user-123')).resolves.not.toThrowError(NotFoundError);
     });
   });
 });
