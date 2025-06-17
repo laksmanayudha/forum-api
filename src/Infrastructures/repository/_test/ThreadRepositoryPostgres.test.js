@@ -2,6 +2,7 @@ const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const pool = require('../../database/postgres/pool');
 const CreateThread = require('../../../Domains/threads/entitties/CreateThread');
+const Thread = require('../../../Domains/threads/entitties/Thread');
 const ThreadRepositoryPostgres = require('../ThreadRepositoryPostgres');
 const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 const CreatedThread = require('../../../Domains/threads/entitties/CreatedThread');
@@ -78,6 +79,33 @@ describe('ThreadRepositoryPostgres', () => {
 
       // Action & Assert
       await expect(threadRepositoryPostgres.verifyThreadExist('thread-123')).resolves.not.toThrowError(NotFoundError);
+    });
+  });
+
+  describe('findThreadWithOwnerById function', () => {
+    it('should get thread detail with owner username', async () => {
+      // Arrange
+      const threadPayload = {
+        id: 'thread-123',
+        owner: 'user-123',
+        title: 'thread title',
+        body: 'thread body',
+      };
+      await UsersTableTestHelper.addUser({ id: 'user-123', username: 'username-123' });
+      const addedThread = await ThreadsTableTestHelper.addThread(threadPayload);
+
+      // Action
+      const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, {});
+      const thread = await threadRepositoryPostgres.findThreadWithOwnerById('thread-123');
+
+      // Assert
+      await expect(thread).toStrictEqual(new Thread({
+        id: threadPayload.id,
+        username: 'username-123',
+        title: threadPayload.title,
+        body: threadPayload.body,
+        date: addedThread.created_at.toISOString(),
+      }));
     });
   });
 });

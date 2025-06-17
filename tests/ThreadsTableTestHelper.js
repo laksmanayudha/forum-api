@@ -13,14 +13,19 @@ const ThreadsTableTestHelper = {
   },
 
   async addThread({
-    id = 'thread-123', owner = 'user-123', title = 'thread title', body = 'thread body',
+    id = 'thread-123',
+    owner = 'user-123',
+    title = 'thread title',
+    body = 'thread body',
   }) {
     const query = {
-      text: 'INSERT INTO threads VALUES($1, $2, $3, $4)',
+      text: 'INSERT INTO threads VALUES($1, $2, $3, $4) RETURNING *',
       values: [id, owner, title, body],
     };
 
-    await pool.query(query);
+    const result = await pool.query(query);
+
+    return result.rows[0];
   },
 
   async cleanTable() {

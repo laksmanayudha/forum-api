@@ -2,6 +2,7 @@ const AuthorizationError = require('../../Commons/exceptions/AuthorizationError'
 const NotFoundError = require('../../Commons/exceptions/NotFoundError');
 const CommentRepository = require('../../Domains/comments/CommentRepository');
 const CreatedComment = require('../../Domains/comments/entitties/CreatedComment');
+const Comment = require('../../Domains/comments/entitties/Comment');
 
 class CommentRepositoryPostgres extends CommentRepository {
   constructor(pool, idGenerator) {
@@ -49,6 +50,30 @@ class CommentRepositoryPostgres extends CommentRepository {
 
     const comment = result.rows[0];
     if (comment.owner !== owner) throw new AuthorizationError('Anda tidak berhak menghapus komentar ini');
+  }
+
+  async findCommenstWithOwnerByThreadId(threadId) {
+    const query = {
+      text: 'SELECT comments.*, users.username FROM comments INNER JOIN users ON comments.owner = users.id WHERE thread_id = $1',
+      values: [threadId],
+    };
+
+    const { rows } = await this._pool.query(query);
+    const comments = rows.map(({
+      id,
+      content,
+      username,
+      created_at: createdAt,
+      is_deleted: isDeleted,
+    }) => new Comment({
+      id,
+      content,
+      username,
+      isDeleted,
+      date: createdAt.toISOString(),
+    }));
+
+    return comments;
   }
 }
 

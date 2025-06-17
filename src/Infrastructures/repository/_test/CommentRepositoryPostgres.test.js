@@ -5,6 +5,7 @@ const CommentRepositoryPostgres = require('../CommentRepositoryPostgres');
 const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
 const CreateComment = require('../../../Domains/comments/entitties/CreateComment');
 const CreatedComment = require('../../../Domains/comments/entitties/CreatedComment');
+const Comment = require('../../../Domains/comments/entitties/Comment');
 const AuthorizationError = require('../../../Commons/exceptions/AuthorizationError');
 const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 
@@ -122,6 +123,31 @@ describe('ThreadRepositoryPostgres', () => {
 
       // Action and Assert
       await expect(commentRepositoryPostgres.verifyCommentOwner('comment-123', 'user-1234')).rejects.toThrowError(AuthorizationError);
+    });
+  });
+
+  describe('findCommenstWithOwnerByThreadId function', () => {
+    it('should find all comment by threadId with owner username', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({ id: 'user-123', username: 'username-123' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
+      const commentOne = await CommentsTableTestHelper.addComment({
+        id: 'comment-123', owner: 'user-123', threadId: 'thread-123', content: 'comment one',
+      });
+
+      // Action
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {});
+      const comments = await commentRepositoryPostgres.findCommenstWithOwnerByThreadId('thread-123');
+
+      // Assert
+      await expect(comments).toHaveLength(1);
+      await expect(comments[0]).toStrictEqual(new Comment({
+        id: 'comment-123',
+        content: 'comment one',
+        username: 'username-123',
+        date: commentOne.created_at.toISOString(),
+        isDeleted: false,
+      }));
     });
   });
 });
