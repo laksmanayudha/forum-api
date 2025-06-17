@@ -1,3 +1,5 @@
+const AuthorizationError = require('../../Commons/exceptions/AuthorizationError');
+const NotFoundError = require('../../Commons/exceptions/NotFoundError');
 const CommentRepository = require('../../Domains/comments/CommentRepository');
 const CreatedComment = require('../../Domains/comments/entitties/CreatedComment');
 
@@ -25,6 +27,28 @@ class CommentRepositoryPostgres extends CommentRepository {
     const result = await this._pool.query(query);
 
     return new CreatedComment({ ...result.rows[0] });
+  }
+
+  async deleteComment(commentId) {
+    const query = {
+      text: 'UPDATE comments SET is_deleted = true WHERE id = $1',
+      values: [commentId],
+    };
+
+    return this._pool.query(query);
+  }
+
+  async verifyCommentOwner(commentId, owner) {
+    const query = {
+      text: 'SELECT * FROM comments WHERE id = $1',
+      values: [commentId],
+    };
+
+    const result = await this._pool.query(query);
+    if (!result.rowCount) throw new NotFoundError('Komentar tidak ditemukan');
+
+    const comment = result.rows[0];
+    if (comment.owner !== owner) throw new AuthorizationError('Anda tidak berhak menghapus komentar ini');
   }
 }
 

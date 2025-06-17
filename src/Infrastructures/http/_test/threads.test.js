@@ -1,14 +1,17 @@
 const UsersTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
+const CommentsTableTestHelper = require('../../../../tests/CommentsTableTestHelper');
 const pool = require('../../database/postgres/pool');
 const createServer = require('../createServer');
 const container = require('../../container');
 
 describe('/threads endpoint', () => {
   const user = { id: 'user-123', username: 'username-123' };
+  const otherUser = { id: 'otheruser-123', username: 'otherusername' };
 
   beforeAll(async () => {
     await UsersTableTestHelper.addUser({ id: user.id, username: user.username });
+    await UsersTableTestHelper.addUser({ id: otherUser.id, username: otherUser.username });
   });
 
   afterAll(async () => {
@@ -226,6 +229,123 @@ describe('/threads endpoint', () => {
       expect(response.statusCode).toEqual(404);
       expect(responseJson.status).toEqual('fail');
       expect(responseJson.message).toEqual('thread tidak ditemukan');
+    });
+  });
+
+  describe('when DELETE /threads/{threadId}/comments', () => {
+    it('should response 200 and delete thread comment', async () => {
+      // Arrange
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: user.id });
+      await CommentsTableTestHelper.addComment({ id: commentId, owner: user.id, threadId });
+
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/threads/${threadId}/comments/${commentId}`,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: user.id,
+            username: user.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(200);
+      expect(responseJson.status).toEqual('success');
+    });
+
+    it('should response 403 when deleted by unauthorized user', async () => {
+      // Arrange
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: user.id });
+      await CommentsTableTestHelper.addComment({ id: commentId, owner: user.id, threadId });
+
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/threads/${threadId}/comments/${commentId}`,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: otherUser.id,
+            username: otherUser.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(403);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toBeDefined();
+    });
+
+    it('should response 404 when thread not found', async () => {
+      // Arrange
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: user.id });
+      await CommentsTableTestHelper.addComment({ id: commentId, owner: user.id, threadId });
+
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/threads/unknownthread/comments/${commentId}`,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: user.id,
+            username: user.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(404);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toBeDefined();
+    });
+
+    it('should response 404 when comment not found', async () => {
+      // Arrange
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: user.id });
+      await CommentsTableTestHelper.addComment({ id: commentId, owner: user.id, threadId });
+
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'DELETE',
+        url: `/threads/${threadId}/comments/unknowncomment`,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: user.id,
+            username: user.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(404);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toBeDefined();
     });
   });
 });
