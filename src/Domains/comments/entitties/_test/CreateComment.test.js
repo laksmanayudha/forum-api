@@ -24,13 +24,31 @@ describe('a CreateComment entities', () => {
     expect(() => new CreateComment(payload)).toThrowError('CREATE_COMMENT.NOT_MEET_DATA_TYPE_SPECIFICATION');
   });
 
-  it('should create CreateComment object correctly', () => {
+  it('should create CreateComment object correctly when parentId undefined', () => {
     // Arrange
     const payload = {
       owner: 'user-123',
       content: 'some comment content',
       threadId: 'thread-123',
-      parentId: null,
+    };
+
+    // Action
+    const createComment = new CreateComment(payload);
+
+    // Assert
+    expect(createComment.owner).toEqual(payload.owner);
+    expect(createComment.content).toEqual(payload.content);
+    expect(createComment.threadId).toEqual(payload.threadId);
+    expect(createComment.parentId).toEqual(null);
+  });
+
+  it('should create CreateComment object correctly when parentId defined', () => {
+    // Arrange
+    const payload = {
+      owner: 'user-123',
+      content: 'some comment content',
+      threadId: 'thread-123',
+      parentId: 'comment-456',
     };
 
     // Action
