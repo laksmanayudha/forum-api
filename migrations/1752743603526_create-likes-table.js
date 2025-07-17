@@ -15,6 +15,12 @@ exports.up = (pgm) => {
       references: 'users(id)',
       onDelete: 'CASCADE',
     },
+    thread_id: {
+      type: 'VARCHAR(50)',
+      notNull: true,
+      references: 'threads(id)',
+      onDelete: 'CASCADE',
+    },
     comment_id: {
       type: 'VARCHAR(50)',
       notNull: true,
@@ -27,8 +33,8 @@ exports.up = (pgm) => {
     },
   });
 
-  pgm.addConstraint('likes', 'likes_owner_comment_id_unique', {
-    unique: ['owner', 'comment_id'],
+  pgm.addConstraint('likes', 'likes_owner_thread_id_comment_id_unique', {
+    unique: ['owner', 'thread_id', 'comment_id'],
   });
 };
 
