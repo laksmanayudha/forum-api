@@ -27,9 +27,9 @@ class GetThreadDetailUseCase {
         id,
         username,
         date,
-        content: isDeleted ? '**komentar telah dihapus**' : content,
+        content: isDeleted ? `**${currentCommentId === null ? 'komentar' : 'balasan'} telah dihapus**` : content,
         replies: findReplies(id, comments),
-      }))
+      })).sort((a, b) => new Date(a.date) - new Date(b.date))
     );
 
     return findReplies(null);

@@ -12,6 +12,7 @@ class ThreadsHandler {
     this.postThreadCommentHandler = this.postThreadCommentHandler.bind(this);
     this.postThreadCommentReplyHandler = this.postThreadCommentReplyHandler.bind(this);
     this.deleteThreadCommentHandler = this.deleteThreadCommentHandler.bind(this);
+    this.deleteThreadCommentReplyHandler = this.deleteThreadCommentReplyHandler.bind(this);
     this.getThreadDetailHandler = this.getThreadDetailHandler.bind(this);
   }
 
@@ -73,6 +74,21 @@ class ThreadsHandler {
 
     const deleteCommentUseCase = this._container.getInstance(DeleteCommentUseCase.name);
     await deleteCommentUseCase.execute({ owner, threadId, id: commentId });
+
+    const response = h.response({
+      status: 'success',
+    });
+
+    response.code(200);
+    return response;
+  }
+
+  async deleteThreadCommentReplyHandler(request, h) {
+    const { id: owner } = request.auth.credentials;
+    const { threadId, replyId } = request.params;
+
+    const deleteCommentUseCase = this._container.getInstance(DeleteCommentUseCase.name);
+    await deleteCommentUseCase.execute({ owner, threadId, id: replyId });
 
     const response = h.response({
       status: 'success',

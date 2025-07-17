@@ -170,7 +170,7 @@ describe('GetThreadDetailUseCase', () => {
             },
             {
               id: 'comment-012',
-              content: '**komentar telah dihapus**',
+              content: '**balasan telah dihapus**',
               username: 'username',
               date: '2021-08-08T07:22:33.555Z',
               replies: [],
