@@ -391,4 +391,162 @@ describe('/threads endpoint', () => {
       expect(responseJson.message).toBeDefined();
     });
   });
+
+  describe('when POST /threads/{threadId}/comments/{commentId}/replies', () => {
+    it('should response 201 and persisted thread comments reply', async () => {
+      // Arrange
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: user.id });
+      await CommentsTableTestHelper.addComment({ id: commentId, threadId, owner: user.id });
+
+      const requestPayload = {
+        content: 'some reply comment content',
+      };
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/${threadId}/comments/${commentId}/replies`,
+        payload: requestPayload,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: otherUser.id,
+            username: otherUser.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(201);
+      expect(responseJson.status).toEqual('success');
+      expect(responseJson.data.addedReply).toBeDefined();
+    });
+
+    it('should response 400 when request payload not contain needed property', async () => {
+      // Arrange
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: user.id });
+      await CommentsTableTestHelper.addComment({ id: commentId, threadId, owner: user.id });
+
+      const requestPayload = {};
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/${threadId}/comments/${commentId}/replies`,
+        payload: requestPayload,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: user.id,
+            username: user.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(400);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('tidak dapat membuat komentar baru karena properti yang dibutuhkan tidak ada');
+    });
+
+    it('should response 400 when request payload not meet data type specification', async () => {
+      // Arrange
+      const threadId = 'thread-123';
+      const commentId = 'comment-123';
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: user.id });
+      await CommentsTableTestHelper.addComment({ id: commentId, threadId, owner: user.id });
+
+      const requestPayload = {
+        content: [],
+      };
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/${threadId}/comments/${commentId}/replies`,
+        payload: requestPayload,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: user.id,
+            username: user.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(400);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('tidak dapat membuat komentar baru karena tipe data tidak sesuai');
+    });
+
+    it('should response 404 when thread not found', async () => {
+      // Arrange
+      const requestPayload = {
+        content: 'some reply comment content',
+      };
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: '/threads/unknownthreadid/comments/unknowncommentid/replies',
+        payload: requestPayload,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: user.id,
+            username: user.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(404);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('thread tidak ditemukan');
+    });
+
+    it('should response 404 when comment not found', async () => {
+      // Arrange
+      const threadId = 'thread-123';
+      await ThreadsTableTestHelper.addThread({ id: threadId, owner: user.id });
+
+      const requestPayload = {
+        content: 'some reply comment content',
+      };
+      const server = await createServer(container);
+
+      // Action
+      const response = await server.inject({
+        method: 'POST',
+        url: `/threads/${threadId}/comments/unknowncommentid/replies`,
+        payload: requestPayload,
+        auth: {
+          strategy: 'forumapi_jwt',
+          credentials: {
+            id: user.id,
+            username: user.username,
+          },
+        },
+      });
+
+      // Assert
+      const responseJson = JSON.parse(response.payload);
+      expect(response.statusCode).toEqual(404);
+      expect(responseJson.status).toEqual('fail');
+      expect(responseJson.message).toEqual('komentar tidak ditemukan');
+    });
+  });
 });
