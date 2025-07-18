@@ -23,6 +23,16 @@ const LikesTableTestHelper = {
     return result.rows;
   },
 
+  async findLikesByThreadIdAndCommentId(threadId, commentId) {
+    const query = {
+      text: 'SELECT * FROM likes WHERE thread_id = $1 and comment_id = $2',
+      values: [threadId, commentId],
+    };
+
+    const result = await pool.query(query);
+    return result.rows;
+  },
+
   async cleanTable() {
     await pool.query('DELETE FROM likes WHERE 1=1');
   },

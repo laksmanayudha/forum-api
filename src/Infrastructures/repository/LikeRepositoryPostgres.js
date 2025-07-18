@@ -1,5 +1,5 @@
-const NotFoundError = require('../../Commons/exceptions/NotFoundError');
 const Like = require('../../Domains/likes/entities/Like');
+const LikeCount = require('../../Domains/likes/entities/LikeCount');
 const LikeRepository = require('../../Domains/likes/LikeRepository');
 
 class LikeRepositoryPostgres extends LikeRepository {
@@ -43,6 +43,23 @@ class LikeRepositoryPostgres extends LikeRepository {
     const result = await this._pool.query(query);
 
     return !!result.rowCount;
+  }
+
+  async findCommentLikeCountByThreadId(threadId) {
+    const query = {
+      text: 'SELECT thread_id, comment_id, COUNT(*) as count FROM likes WHERE thread_id = $1 GROUP BY thread_id, comment_id',
+      values: [threadId],
+    };
+
+    const result = await this._pool.query(query);
+
+    return result.rows.map((likeCount) => (
+      new LikeCount({
+        threadId: likeCount.thread_id,
+        commentId: likeCount.comment_id,
+        count: Number(likeCount.count),
+      })
+    ));
   }
 }
 

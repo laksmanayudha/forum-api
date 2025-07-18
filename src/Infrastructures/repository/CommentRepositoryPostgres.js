@@ -40,11 +40,6 @@ class CommentRepositoryPostgres extends CommentRepository {
   }
 
   async verifyCommentOwner(commentId, owner) {
-    const query = {
-      text: 'SELECT * FROM comments WHERE id = $1',
-      values: [commentId],
-    };
-
     const comment = await this.verifyCommentExist(commentId);
 
     if (comment.owner !== owner) throw new AuthorizationError('Anda tidak berhak menghapus komentar ini');
