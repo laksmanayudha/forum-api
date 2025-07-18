@@ -26,7 +26,7 @@ describe('ThreadRepositoryPostgres', () => {
       await UsersTableTestHelper.addUser({ id: 'user-123' });
       await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
 
-      const createThread = new CreateComment({
+      const createComment = new CreateComment({
         owner: 'user-123',
         content: 'some comment content',
         threadId: 'thread-123',
@@ -35,7 +35,7 @@ describe('ThreadRepositoryPostgres', () => {
       const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, fakeIdGenerator);
 
       // Action
-      await commentRepositoryPostgres.addComment(createThread);
+      await commentRepositoryPostgres.addComment(createComment);
 
       // Assert
       const comments = await CommentsTableTestHelper.findCommentById('comment-123');
@@ -64,6 +64,32 @@ describe('ThreadRepositoryPostgres', () => {
         content: 'some comment content',
         owner: 'user-123',
       }));
+    });
+
+    it('should persist added comment with parentId and return added comment correctly', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({ id: 'user-123', username: 'username-123' });
+      await UsersTableTestHelper.addUser({ id: 'user-456', username: 'username-456' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-123', threadId: 'thread-123', owner: 'user-123' });
+
+      const createComment = new CreateComment({
+        owner: 'user-456',
+        content: 'some replied comment content',
+        threadId: 'thread-123',
+        parentId: 'comment-123',
+      });
+
+      const fakeIdGenerator = () => '456';
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, fakeIdGenerator);
+
+      // Action
+      await commentRepositoryPostgres.addComment(createComment);
+
+      // Assert
+      const comments = await CommentsTableTestHelper.findCommentById('comment-456');
+      expect(comments).toHaveLength(1);
+      expect(comments[0].parent_id).toEqual(createComment.parentId);
     });
   });
 
@@ -123,6 +149,27 @@ describe('ThreadRepositoryPostgres', () => {
 
       // Action and Assert
       await expect(commentRepositoryPostgres.verifyCommentOwner('comment-123', 'user-1234')).rejects.toThrowError(AuthorizationError);
+    });
+  });
+
+  describe('verifyCommentExist function', () => {
+    it('should throw NotFoundError when comment not found', async () => {
+      // Arrange
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {});
+
+      // Action and Assert
+      await expect(commentRepositoryPostgres.verifyCommentOwner('comment-123')).rejects.toThrowError(NotFoundError);
+    });
+
+    it('should not throw NotFoundError when comment exists', async () => {
+      // Arrange
+      await UsersTableTestHelper.addUser({ id: 'user-123' });
+      await ThreadsTableTestHelper.addThread({ id: 'thread-123', owner: 'user-123' });
+      await CommentsTableTestHelper.addComment({ id: 'comment-123', threadId: 'thread-123', owner: 'user-123' });
+      const commentRepositoryPostgres = new CommentRepositoryPostgres(pool, {});
+
+      // Action & Assert
+      await expect(commentRepositoryPostgres.verifyCommentExist('comment-123')).resolves.not.toThrowError(NotFoundError);
     });
   });
 

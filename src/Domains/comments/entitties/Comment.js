@@ -8,6 +8,7 @@ class Comment {
       username,
       date,
       isDeleted,
+      parentId = null,
     } = payload;
 
     this.id = id;
@@ -15,6 +16,7 @@ class Comment {
     this.username = username;
     this.date = date;
     this.isDeleted = isDeleted;
+    this.parentId = parentId;
   }
 
   _verifyPayload({
@@ -23,6 +25,7 @@ class Comment {
     username,
     date,
     isDeleted,
+    parentId = null,
   }) {
     if (!id || !content || !username || !date || isDeleted === undefined) {
       throw new Error('COMMENT.NOT_CONTAIN_NEEDED_PROPERTY');
@@ -34,6 +37,7 @@ class Comment {
       || typeof username !== 'string'
       || typeof date !== 'string'
       || typeof isDeleted !== 'boolean'
+      || (parentId !== null && typeof parentId !== 'string')
     ) {
       throw new Error('COMMENT.NOT_MEET_DATA_TYPE_SPECIFICATION');
     }

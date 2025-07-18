@@ -20,8 +20,16 @@ describe('a CreateComment entities', () => {
       parentId: 123.4,
     };
 
+    const payloadTwo = {
+      owner: 'user-123',
+      content: 'some comment content',
+      threadId: 'thread-123',
+      parentId: 123456,
+    };
+
     // Action and Assert
     expect(() => new CreateComment(payload)).toThrowError('CREATE_COMMENT.NOT_MEET_DATA_TYPE_SPECIFICATION');
+    expect(() => new CreateComment(payloadTwo)).toThrowError('CREATE_COMMENT.NOT_MEET_DATA_TYPE_SPECIFICATION');
   });
 
   it('should create CreateComment object correctly when parentId undefined', () => {

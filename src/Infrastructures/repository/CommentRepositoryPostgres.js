@@ -40,16 +40,21 @@ class CommentRepositoryPostgres extends CommentRepository {
   }
 
   async verifyCommentOwner(commentId, owner) {
+    const comment = await this.verifyCommentExist(commentId);
+
+    if (comment.owner !== owner) throw new AuthorizationError('Anda tidak berhak menghapus komentar ini');
+  }
+
+  async verifyCommentExist(commentId) {
     const query = {
       text: 'SELECT * FROM comments WHERE id = $1',
       values: [commentId],
     };
 
     const result = await this._pool.query(query);
-    if (!result.rowCount) throw new NotFoundError('Komentar tidak ditemukan');
+    if (!result.rowCount) throw new NotFoundError('komentar tidak ditemukan');
 
-    const comment = result.rows[0];
-    if (comment.owner !== owner) throw new AuthorizationError('Anda tidak berhak menghapus komentar ini');
+    return result.rows[0];
   }
 
   async findCommenstWithOwnerByThreadId(threadId) {
@@ -65,11 +70,13 @@ class CommentRepositoryPostgres extends CommentRepository {
       username,
       created_at: createdAt,
       is_deleted: isDeleted,
+      parent_id: parentId,
     }) => new Comment({
       id,
       content,
       username,
       isDeleted,
+      parentId,
       date: createdAt.toISOString(),
     }));
 

@@ -19,6 +19,7 @@ describe('a Comment entities', () => {
       username: true,
       date: 123.4,
       isDeleted: 'test',
+      parentId: false,
     };
 
     // Action and Assert
@@ -33,6 +34,7 @@ describe('a Comment entities', () => {
       username: 'username',
       date: '2021-08-08T07:22:33.555Z',
       isDeleted: true,
+      parentId: 'comment-456',
     };
 
     // Action
@@ -44,5 +46,6 @@ describe('a Comment entities', () => {
     expect(comment.username).toEqual(payload.username);
     expect(comment.date).toEqual(payload.date);
     expect(comment.isDeleted).toEqual(payload.isDeleted);
+    expect(comment.parentId).toEqual(payload.parentId);
   });
 });
